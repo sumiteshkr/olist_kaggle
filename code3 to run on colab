@@ -1,0 +1,121 @@
+# 1. Install the MySQL connector if it's not already installed
+!pip install mysql-connector-python
+
+# 2. Import the necessary libraries
+import pandas as pd
+import mysql.connector
+from mysql.connector import Error
+
+# 3. Database Connection Details
+hostname = "2zqk0i.h.filess.io"
+database = "olistProject_givemanner"
+port = "3306"
+username = "olistProject_givemanner"
+password = "606ec8cd3697eefc94871d9aa68e63ed9596cd02"
+
+# 4. CSV and Table Details
+csv_file_path = 'olist_order_payments_dataset.csv'
+table_name = 'olist_order_payments'
+batch_size = 1000
+
+# Function to handle table creation and deletion
+def prepare_table(connection, cursor, table_name):
+    """
+    Deletes the table if it exists and then creates a new one.
+    """
+    # Drop the table if it already exists
+    drop_table_query = f"DROP TABLE IF EXISTS `{table_name}`;"
+    try:
+        cursor.execute(drop_table_query)
+        print(f"Table '{table_name}' dropped successfully if it existed.")
+    except Error as e:
+        print(f"Error dropping table: {e}")
+        raise
+
+    # Create the new table
+    create_table_query = f"""
+    CREATE TABLE `{table_name}` (
+        `order_id` VARCHAR(255) NOT NULL,
+        `payment_sequential` INT,
+        `payment_type` VARCHAR(255),
+        `payment_installments` INT,
+        `payment_value` DECIMAL(10, 2)
+    );
+    """
+    try:
+        cursor.execute(create_table_query)
+        print(f"Table '{table_name}' created successfully.")
+    except Error as e:
+        print(f"Error creating table: {e}")
+        raise
+
+# 5. Read the CSV file into a pandas DataFrame
+try:
+    df = pd.read_csv(csv_file_path)
+    print("CSV file loaded successfully.")
+    print("DataFrame head:\n", df.head())
+    
+    required_cols = ['order_id', 'payment_sequential', 'payment_type', 'payment_installments', 'payment_value']
+    if not all(col in df.columns for col in required_cols):
+        print("Error: The CSV is missing one of the required columns.")
+        print(f"Required columns: {required_cols}")
+        print(f"Found columns: {list(df.columns)}")
+        exit()
+
+except FileNotFoundError:
+    print(f"Error: The file '{csv_file_path}' was not found.")
+    exit()
+except Exception as e:
+    print(f"An error occurred while reading the CSV: {e}")
+    exit()
+
+# 6. Connect to MySQL Database
+connection = None
+cursor = None
+try:
+    connection = mysql.connector.connect(
+        host=hostname,
+        database=database,
+        user=username,
+        password=password,
+        port=port
+    )
+    if connection.is_connected():
+        cursor = connection.cursor()
+        print("Connected to MySQL database.")
+        
+        # Call the function to drop and then create the table
+        prepare_table(connection, cursor, table_name)
+
+        # Prepare the INSERT query
+        columns = ', '.join(df.columns)
+        placeholders = ', '.join(['%s'] * len(df.columns))
+        insert_query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+        
+        # Convert DataFrame to a list of tuples for batch insertion
+        records = [tuple(row) for row in df.itertuples(index=False)]
+        
+        # Insert data in batches
+        for i in range(0, len(records), batch_size):
+            batch = records[i:i + batch_size]
+            try:
+                cursor.executemany(insert_query, batch)
+                connection.commit()
+                print(f"Inserted batch {i} to {i+len(batch)} successfully.")
+            except Error as insert_error:
+                print(f"Failed to insert batch starting at index {i}. Error: {insert_error}")
+                connection.rollback()
+                break
+
+        print("Data upload process completed.")
+
+except Error as e:
+    print(f"Error while connecting to MySQL or during data insertion: {e}")
+
+finally:
+    # 7. Close the connection
+    if connection and connection.is_connected():
+        if cursor:
+            cursor.close()
+        connection.close()
+        print("MySQL connection is closed.")
