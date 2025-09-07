@@ -1,0 +1,68 @@
+# 1. Install the pymongo library, which is required for connecting to MongoDB
+!pip install pymongo
+
+# 2. Import the necessary modules
+import pandas as pd
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, PyMongoError
+
+# 3. MongoDB Connection Details
+hostname = "pzbcru.h.filess.io"
+database = "olistDataNoSQL_missionthy"
+port = "61004"
+username = "olistDataNoSQL_missionthy"
+password = "13bbbdb49c0acb7f88bbadd40a57c77db7b9db3a"
+
+# Construct the MongoDB URI
+uri = f"mongodb://{username}:{password}@{hostname}:{port}/{database}"
+
+# 4. CSV and Collection Details
+csv_file_path = 'product_category_name_translation.csv'
+collection_name = 'product_category_name_translation'
+
+# 5. Connect to MongoDB
+client = None
+try:
+    print("Attempting to connect to MongoDB...")
+    client = MongoClient(uri)
+    client.admin.command('ping') # The ping command is a simple way to check connection
+    print("Connection to MongoDB successful!")
+    
+    # Access the database and collection
+    db = client[database]
+    collection = db[collection_name]
+    
+    # 6. Read the CSV file into a pandas DataFrame
+    try:
+        df = pd.read_csv(csv_file_path)
+        print("CSV file loaded successfully.")
+    except FileNotFoundError:
+        print(f"Error: The file '{csv_file_path}' was not found.")
+        exit()
+    
+    # 7. Convert DataFrame to a list of dictionaries (BSON-like format)
+    # The 'records' orientation converts each row into a dictionary
+    records = df.to_dict('records')
+    print(f"Converted {len(records)} records from DataFrame.")
+
+    # 8. Insert the data into the MongoDB collection
+    if records:
+        print(f"Inserting {len(records)} records into the '{collection_name}' collection...")
+        try:
+            result = collection.insert_many(records)
+            print(f"Successfully inserted {len(result.inserted_ids)} documents.")
+        except PyMongoError as insert_error:
+            print(f"An error occurred during data insertion: {insert_error}")
+    else:
+        print("No records found in the CSV to insert.")
+
+except ConnectionFailure as e:
+    print(f"Failed to connect to MongoDB: {e}")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
+
+finally:
+    # 9. Close the MongoDB connection
+    if client:
+        client.close()
+        print("MongoDB connection is closed.")
