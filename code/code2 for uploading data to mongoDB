@@ -7,11 +7,11 @@ from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, PyMongoError
 
 # 3. MongoDB Connection Details
-hostname = "pzbcru.h.filess.io"
-database = "olistDataNoSQL_missionthy"
-port = "61004"
-username = "olistDataNoSQL_missionthy"
-password = "13bbbdb49c0acb7f88bbadd40a57c77db7b9db3a"
+hostname = "*************"
+database = "**************"
+port = "****"
+username = "**********************"
+password = "**************************"
 
 # Construct the MongoDB URI
 uri = f"mongodb://{username}:{password}@{hostname}:{port}/{database}"
