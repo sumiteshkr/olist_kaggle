@@ -30,9 +30,17 @@ try:
     
     # Access the database and collection
     db = client[database]
+    
+    # 6. Drop the collection if it exists to ensure a clean upload
+    try:
+        db.drop_collection(collection_name)
+        print(f"Collection '{collection_name}' dropped successfully if it existed.")
+    except PyMongoError as drop_error:
+        print(f"An error occurred while trying to drop the collection: {drop_error}")
+
     collection = db[collection_name]
     
-    # 6. Read the CSV file into a pandas DataFrame
+    # 7. Read the CSV file into a pandas DataFrame
     try:
         df = pd.read_csv(csv_file_path)
         print("CSV file loaded successfully.")
@@ -40,12 +48,12 @@ try:
         print(f"Error: The file '{csv_file_path}' was not found.")
         exit()
     
-    # 7. Convert DataFrame to a list of dictionaries (BSON-like format)
+    # 8. Convert DataFrame to a list of dictionaries (BSON-like format)
     # The 'records' orientation converts each row into a dictionary
     records = df.to_dict('records')
     print(f"Converted {len(records)} records from DataFrame.")
 
-    # 8. Insert the data into the MongoDB collection
+    # 9. Insert the data into the MongoDB collection
     if records:
         print(f"Inserting {len(records)} records into the '{collection_name}' collection...")
         try:
@@ -62,7 +70,7 @@ except Exception as e:
     print(f"An unexpected error occurred: {e}")
 
 finally:
-    # 9. Close the MongoDB connection
+    # 10. Close the MongoDB connection
     if client:
         client.close()
         print("MongoDB connection is closed.")
