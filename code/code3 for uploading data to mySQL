@@ -7,11 +7,11 @@ import mysql.connector
 from mysql.connector import Error
 
 # 3. Database Connection Details
-hostname = "2zqk0i.h.filess.io"
-database = "olistProject_givemanner"
-port = "3306"
-username = "olistProject_givemanner"
-password = "606ec8cd3697eefc94871d9aa68e63ed9596cd02"
+hostname = "****************"
+database = "****************"
+port = "****"
+username = "********************"
+password = "************************"
 
 # 4. CSV and Table Details
 csv_file_path = 'olist_order_payments_dataset.csv'
