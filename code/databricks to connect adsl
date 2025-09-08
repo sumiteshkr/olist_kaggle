@@ -1,6 +1,6 @@
 https://learn.microsoft.com/en-us/azure/databricks/connect/storage/tutorial-azure-storage
 
-service_credential = dbutils.secrets.get(scope="<scope>",key="<service-credential-key>")
+CHANGE THE BELOW CODE TO HAVE STORAGE ACCOUNT AND OTHER KEY OR ID AS VARIABLE OUTSIDE
 
 spark.conf.set("fs.azure.account.auth.type.<storage-account>.dfs.core.windows.net", "OAuth")
 spark.conf.set("fs.azure.account.oauth.provider.type.<storage-account>.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
